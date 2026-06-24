@@ -59,6 +59,7 @@ A tela principal inclui:
 * formulário da rede externa com senha salva visível;
 * scanner Wi-Fi sob demanda; tocar ou clicar em um SSID preenche o campo da rede externa;
 * configuração do AP: SSID, número máximo de clientes, IP do AP e faixa DHCP;
+* QR Code offline para conectar ao AP do ESP32 com a senha fixa `12345678`;
 * configuração do DNS entregue aos clientes do AP;
 * lista atualizada automaticamente de clientes conectados com MAC e IP;
 * teste manual de internet com etapas STA, ping `8.8.8.8`, DNS `example.com` e HTTP `http://example.com`;

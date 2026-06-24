@@ -297,7 +297,7 @@ static esp_err_t index_get_handler(httpd_req_t *req)
     html_escape(dhcp_end_html, sizeof(dhcp_end_html), status.ap_config.dhcp_end);
     html_escape(dns_html, sizeof(dns_html), status.dns_server);
 
-    const size_t page_size = 15000;
+    const size_t page_size = 24000;
     char *page = calloc(1, page_size);
     if (page == NULL) {
         ESP_LOGE(TAG, "Sem memoria para montar pagina");
@@ -326,10 +326,20 @@ static esp_err_t index_get_handler(httpd_req_t *req)
         "table{width:100%%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid #edf1f5;padding:8px;font-size:14px}"
         ".actions form{display:inline}.muted{color:#536471;font-size:13px}.ok{color:#067647}.bad{color:#b42318}"
         "#scan-results button{background:#eef4ff;color:#123a7a;border:1px solid #b8cdf8;margin:4px 4px 0 0}"
+        ".qrbox{display:flex;flex-wrap:wrap;gap:16px;align-items:center}.qrbox canvas{width:220px;height:220px;image-rendering:pixelated;border:1px solid var(--b);background:white;padding:8px}"
         "pre{white-space:pre-wrap;background:#101828;color:#f2f4f7;border-radius:6px;padding:10px;max-height:260px;overflow:auto}"
         "</style>"
         "<script>"
         "function t(v){return v===undefined||v===null||v===''?'-':v}"
+        "let lastQrSsid='';"
+        "function escWifi(v){return String(v||'').replace(/[\\\\;,:]/g,function(c){return '\\\\'+c})}"
+        "function wifiQrPayload(ssid){return 'WIFI:T:WPA;S:'+escWifi(ssid)+';P:12345678;;'}"
+        "function utf8(s){if(window.TextEncoder)return Array.from(new TextEncoder().encode(s));let a=[];for(let i=0;i<s.length;i++){let c=s.charCodeAt(i);if(c<128)a.push(c);else if(c<2048)a.push(192|c>>6,128|c&63);else a.push(224|c>>12,128|c>>6&63,128|c&63)}return a}"
+        "function gfMul(x,y){let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>>7)*285);if((y>>>i)&1)z^=x}return z&255}"
+        "function rsDiv(d){let r=Array(d).fill(0);r[d-1]=1;let root=1;for(let i=0;i<d;i++){for(let j=0;j<d;j++){r[j]=gfMul(r[j],root);if(j+1<d)r[j]^=r[j+1]}root=gfMul(root,2)}return r}"
+        "function rsRem(data,div){let r=Array(div.length).fill(0);data.forEach(function(b){let f=b^r.shift();r.push(0);for(let i=0;i<div.length;i++)r[i]^=gfMul(div[i],f)});return r}"
+        "function qrBits(data){let bits=[];function put(v,n){for(let i=n-1;i>=0;i--)bits.push((v>>>i)&1)}put(4,4);put(data.length,8);data.forEach(b=>put(b,8));put(0,Math.min(4,108*8-bits.length));while(bits.length%%8)bits.push(0);let cw=[];for(let i=0;i<bits.length;i+=8)cw.push(bits.slice(i,i+8).reduce((a,b)=>a*2+b,0));for(let p=0xec;cw.length<108;p^=0xfd)cw.push(p);let out=[];cw.concat(rsRem(cw,rsDiv(26))).forEach(b=>{for(let i=7;i>=0;i--)out.push((b>>>i)&1)});return out}"
+        "function renderApQr(ssid){if(ssid===lastQrSsid)return;lastQrSsid=ssid;document.getElementById('ap-qr-ssid').textContent=t(ssid);let cv=document.getElementById('ap-qr-canvas'),msg=document.getElementById('ap-qr-msg');if(!cv||!cv.getContext){msg.textContent='Canvas nao suportado neste navegador';return}let bytes=utf8(wifiQrPayload(ssid));if(bytes.length>108){msg.textContent='SSID grande demais para QR';return}let n=37,m=Array.from({length:n},()=>Array(n).fill(null)),f=Array.from({length:n},()=>Array(n).fill(false));function set(x,y,v){if(x>=0&&x<n&&y>=0&&y<n){m[y][x]=v;f[y][x]=true}}function finder(x,y){for(let dy=-1;dy<8;dy++)for(let dx=-1;dx<8;dx++)set(x+dx,y+dy,false);for(let dy=0;dy<7;dy++)for(let dx=0;dx<7;dx++)set(x+dx,y+dy,dx==0||dx==6||dy==0||dy==6||(dx>=2&&dx<=4&&dy>=2&&dy<=4))}finder(0,0);finder(n-7,0);finder(0,n-7);for(let i=8;i<n-8;i++){set(6,i,i%%2==0);set(i,6,i%%2==0)}for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(30+dx,30+dy,Math.max(Math.abs(dx),Math.abs(dy))!=1);for(let i=0;i<9;i++){set(8,i,false);set(i,8,false)}for(let i=0;i<8;i++){set(n-1-i,8,false);set(8,n-1-i,false)}set(8,n-8,true);let bits=qrBits(bytes),k=0,up=true;for(let x=n-1;x>0;x-=2){if(x==6)x--;for(let v=0;v<n;v++){let y=up?n-1-v:v;for(let dx=0;dx<2;dx++){let xx=x-dx;if(!f[y][xx]){let b=k<bits.length?bits[k++]:0;if((xx+y)%%2==0)b^=1;m[y][xx]=!!b}}}up=!up}let fmt=0x77c4;function gb(i){return ((fmt>>>i)&1)!=0}for(let i=0;i<=5;i++)m[i][8]=gb(i);m[7][8]=gb(6);m[8][8]=gb(7);m[8][7]=gb(8);for(let i=9;i<15;i++)m[8][14-i]=gb(i);for(let i=0;i<8;i++)m[8][n-1-i]=gb(i);for(let i=8;i<15;i++)m[n-15+i][8]=gb(i);let c=cv.getContext('2d'),s=8,q=4;cv.width=cv.height=(n+q*2)*s;c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);c.fillStyle='#000';for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(m[y][x])c.fillRect((x+q)*s,(y+q)*s,s,s);msg.textContent='Aponte a camera para conectar ao AP'}"
         "async function refreshStatus(){try{const r=await fetch('/status');const s=await r.json();"
         "document.getElementById('state').textContent=s.state;"
         "document.getElementById('internet').textContent=s.internet?'OK':'sem internet';"
@@ -339,6 +349,7 @@ static esp_err_t index_get_handler(httpd_req_t *req)
         "document.getElementById('rssi').textContent=s.rssi?String(s.rssi)+' dBm':'-';document.getElementById('nat').textContent=s.napt?'ativo':'inativo';"
         "document.getElementById('uptime').textContent=s.uptime+' s';document.getElementById('heap').textContent=s.heap_free+' bytes';"
         "document.getElementById('ap-current').textContent=s.ap_ssid+' / '+s.ap_ip;document.getElementById('clients-count').textContent=s.client_count;"
+        "renderApQr(s.ap_ssid);"
         "const cb=document.getElementById('clients-body');cb.innerHTML='';"
         "if(!s.clients.length){cb.innerHTML='<tr><td colspan=\"2\">Nenhum dispositivo conectado</td></tr>'}else{s.clients.forEach(c=>{const tr=document.createElement('tr');tr.innerHTML='<td>'+c.mac+'</td><td>'+t(c.ip)+'</td>';cb.appendChild(tr)})}"
         "const lb=document.getElementById('logs');lb.textContent=s.events.map(e=>'['+e.uptime+'s] '+e.message).join('\\n')||'Sem eventos';"
@@ -384,6 +395,7 @@ static esp_err_t index_get_handler(httpd_req_t *req)
         "<button type=\"submit\">Salvar AP e reiniciar</button>"
         "</form><p class=\"muted\">Senha do AP fixa: 12345678. Mudancas de AP/IP sao aplicadas apos reiniciar.</p>"
         "</section>"
+        "<section><h2>Conectar ao AP</h2><div class=\"qrbox\"><canvas id=\"ap-qr-canvas\" width=\"1\" height=\"1\"></canvas><div><div class=\"kv\"><b>SSID</b><span id=\"ap-qr-ssid\">%s</span></div><div class=\"kv\"><b>Senha</b><span>12345678</span></div><p id=\"ap-qr-msg\" class=\"muted\">Carregando QR Code...</p></div></div></section>"
         "<section><h2>DNS dos clientes do AP</h2>"
         "<form method=\"post\" action=\"/dns\"><label for=\"dns\">DNS</label><input id=\"dns\" name=\"dns\" maxlength=\"15\" value=\"%s\" required><button type=\"submit\">Salvar DNS</button></form>"
         "<form method=\"post\" action=\"/dns/reset\"><button class=\"secondary\" type=\"submit\">Resetar DNS para 8.8.8.8</button></form>"
@@ -404,6 +416,7 @@ static esp_err_t index_get_handler(httpd_req_t *req)
         ap_ip_html,
         dhcp_start_html,
         dhcp_end_html,
+        ap_ssid_html,
         dns_html,
         has_saved_credentials
             ? "<form method=\"post\" action=\"/forget\"><button class=\"danger inline\" type=\"submit\">Esquecer Wi-Fi externo</button></form>"
