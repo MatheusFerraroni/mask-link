@@ -55,7 +55,7 @@ O firmware anuncia a URL de configuração via captive portal DHCP e redireciona
 
 A tela principal inclui:
 
-* status completo: uptime, heap livre, estado da STA, SSID externo, IP/gateway/DNS da STA, RSSI, NAT, internet e quantidade de clientes;
+* status completo: uptime, heap livre, estado da STA, SSID externo, IP/gateway/DNS da STA, RSSI com referência de qualidade do sinal, NAT, internet e quantidade de clientes;
 * formulário da rede externa com senha salva visível;
 * scanner Wi-Fi sob demanda; tocar ou clicar em um SSID preenche o campo da rede externa;
 * configuração do AP: SSID, número máximo de clientes, IP do AP e faixa DHCP;
