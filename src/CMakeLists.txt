@@ -1,0 +1,13 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "wifi_manager.c"
+        "web_config.c"
+        "storage.c"
+        "app_config.c"
+        "event_log.c"
+        "status_led.c"
+        "connectivity.c"
+    INCLUDE_DIRS
+        "."
+)
