@@ -135,13 +135,13 @@ static void url_decode(char *dst, size_t dst_size, const char *src)
 static esp_err_t read_request_body(httpd_req_t *req, size_t max_len, char **body_out)
 {
     if (req->content_len <= 0 || req->content_len > max_len) {
-        ESP_LOGE(TAG, "POST invalido: tamanho %d", req->content_len);
+        ESP_LOGE(TAG, "POST inválido: tamanho %d", req->content_len);
         return ESP_ERR_INVALID_ARG;
     }
 
     char *body = calloc(1, req->content_len + 1);
     if (body == NULL) {
-        ESP_LOGE(TAG, "Sem memoria para receber POST");
+        ESP_LOGE(TAG, "Sem memória para receber POST");
         return ESP_ERR_NO_MEM;
     }
 
@@ -256,7 +256,7 @@ static void delayed_reboot_task(void *arg)
 {
     uint32_t delay_ms = (uint32_t)(uintptr_t)arg;
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    ESP_LOGI(TAG, "Reiniciando ESP32 por requisicao web");
+    ESP_LOGI(TAG, "Reiniciando ESP32 por requisição web");
     esp_restart();
 }
 
@@ -377,7 +377,7 @@ static esp_err_t index_get_handler(httpd_req_t *req)
         "<section><h2>AP do ESP32</h2>"
         "<form method=\"post\" action=\"/ap-config\">"
         "<label for=\"ap_ssid\">SSID do AP</label><input id=\"ap_ssid\" name=\"ap_ssid\" maxlength=\"32\" value=\"%s\" required>"
-        "<label for=\"ap_max_clients\">Maximo de clientes</label><input id=\"ap_max_clients\" name=\"ap_max_clients\" type=\"number\" min=\"1\" max=\"10\" value=\"%u\" required>"
+        "<label for=\"ap_max_clients\">Máximo de clientes</label><input id=\"ap_max_clients\" name=\"ap_max_clients\" type=\"number\" min=\"1\" max=\"10\" value=\"%u\" required>"
         "<label for=\"ap_ip\">IP do AP</label><input id=\"ap_ip\" name=\"ap_ip\" maxlength=\"15\" value=\"%s\" required>"
         "<label for=\"dhcp_start\">DHCP inicio</label><input id=\"dhcp_start\" name=\"dhcp_start\" maxlength=\"15\" value=\"%s\" required>"
         "<label for=\"dhcp_end\">DHCP fim</label><input id=\"dhcp_end\" name=\"dhcp_end\" maxlength=\"15\" value=\"%s\" required>"
@@ -391,10 +391,10 @@ static esp_err_t index_get_handler(httpd_req_t *req)
         "<section><h2>Dispositivos conectados</h2><table><thead><tr><th>MAC</th><th>IP</th></tr></thead><tbody id=\"clients-body\"><tr><td colspan=\"2\">Carregando...</td></tr></tbody></table></section>"
         "<section><h2>Teste de internet</h2><button type=\"button\" onclick=\"testInternet()\">Testar conexao</button><pre id=\"test-result\">Aguardando teste</pre></section>"
         "<section><h2>Logs</h2><pre id=\"logs\">Carregando...</pre></section>"
-        "<section class=\"actions\"><h2>Acoes</h2>"
+        "<section class=\"actions\"><h2>Ações</h2>"
         "%s"
         "<form method=\"post\" action=\"/reboot\"><button class=\"secondary inline\" type=\"submit\">Reiniciar ESP32</button></form>"
-        "<form method=\"post\" action=\"/factory-reset\"><button class=\"danger inline\" type=\"submit\">Resetar tudo para padrao</button></form>"
+        "<form method=\"post\" action=\"/factory-reset\"><button class=\"danger inline\" type=\"submit\">Resetar tudo para padrão</button></form>"
         "</section>"
         "</main></body></html>",
         ssid_html,
@@ -411,8 +411,8 @@ static esp_err_t index_get_handler(httpd_req_t *req)
 
     if (written < 0 || written >= (int)page_size) {
         free(page);
-        ESP_LOGE(TAG, "Pagina excedeu o buffer");
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Pagina muito grande");
+        ESP_LOGE(TAG, "Página excedeu o buffer");
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Página muito grande");
         return ESP_FAIL;
     }
 
@@ -441,7 +441,7 @@ static esp_err_t status_get_handler(httpd_req_t *req)
 
     char *response = calloc(1, 9000);
     if (response == NULL) {
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Sem memoria");
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Sem memória");
         return ESP_FAIL;
     }
     size_t response_size = 9000;
@@ -732,7 +732,7 @@ static esp_err_t factory_reset_post_handler(httpd_req_t *req)
     }
 
     event_log_clear();
-    event_log_add("Configuracoes resetadas; reiniciando");
+    event_log_add("Configurações resetadas; reiniciando");
     schedule_reboot(5500);
     httpd_resp_set_type(req, "text/html; charset=utf-8");
     return httpd_resp_sendstr(req, "<!doctype html><html><body><h1>Resetando</h1><p>Voltando para os padroes.</p></body></html>");
